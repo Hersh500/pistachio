@@ -5,25 +5,30 @@ ARGS:
 	-m selects a mailbox, does default action--shows messages from past week 
 	-c configure email & password
 	-m -s select a mailbox, search for a keyword in it
-	-m -d select a mailbox, show messages from a specific date
+	-m -d select a mailbox, show messages since a specific date
 	-f specify a flag (UNREAD, ETC.)
 	-m -x select a mailbox, delete a specific message (done by id)
+	--sh opens the shell, for multiple commands (So that initialize does not need to be run again)  
 	No arg: view messages from past week in inbox 
+"""
+"""
+	Shell commands:
+	view [mailbox]: views a mailbox
+	delete [id] deletes a message, throws an error if no mailbox is selected / id is invalid 
 """
 
 import argparse 
 import imaplib
 import email
 import getpass
+import base64
 
 def initialize():
 
-	global PARSER
-	global IMAP_SERVER
-	global MAIL_SERVERS 
-
 	fname = "pist.conf"
 	try: 
+		if results.config:
+			configure(fname)
 		f = open(fname, 'r')
 	except IOError:
 		configure(fname)
@@ -44,10 +49,28 @@ def initialize():
 	 
 def configure(fname):
 	f = open(fname, 'w')
-	print("Configure for ease of use?")
-	f.write(input("Enter your email address"))
-	f.write(base64.b64encode( getpass.getpass( "Enter your password (stored as base64 encoded str)" )))
+	print("CONFIGURING...")
+	e = raw_input("Enter your email address ")
+	f.write(str(e + "\n"))
+	f.write(base64.b64encode( getpass.getpass( "Enter your password (stored as base64 encoded str) " )))
+	f.close()
 	
 def process_mailbox(IMAP_SERVER):
 
 def main():
+	global results
+	parser = argparse.ArgumentParser(description='Simple Terminal mail client')
+	
+	parser.add_argument("-m", action='store', dest='mailbox', help='Specify a mailbox', default="INBOX")
+	parser.add_argument("-d", action='store', dest='date', help='Specify a date in the form of dd-mon-yyyy')
+	parser.add_argument("-c", action='store_true', dest='config', help="change the username/password")
+	parser.add_argument("--sh", action="store_true", dest="act_shell", help="Add flag if you want to open shell", default=False)
+	parser.add_argument("--lm", action="store_true", dest="list_mails", help="Add flag if you want to see the mailboxes in your account", default=False)
+
+	results = parser.parse_args()
+	
+	IMAP_SERVER = initialize()
+	
+
+if __name__ == "__main__":
+	main()
