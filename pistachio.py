@@ -7,7 +7,7 @@ ARGS:
 	-m -s select a mailbox, search for a keyword in it
 	-m -d select a mailbox, show messages since a specific date
 	-f specify a flag (UNREAD, ETC.)
-	-m -x select a mailbox, delete a specific message (done by id)
+	-m -x select a mailbox, delete a specific message (by id)
 	--sh opens the shell, for multiple commands (So that initialize does not need to be run again)  
 	No arg: view messages from past week in inbox 
 """
@@ -46,7 +46,7 @@ def initialize():
 	user2 = user.split("@")
 	if user2[1] not in MAIL_SERVERS:
 		print "That server is not supported yet. Please enter another address"
-		print "Upon trying again, add -c flag to reconfigure"
+		print "add -c flag to reconfigure"
 		sys.exit(1)
 
 	else:
@@ -75,11 +75,11 @@ def default_date():
 	return date_str
 	
 def process_messages(IMAP_SERVER, ids):
-	for id in mail_ids: 
-		rv, data = IMAP_SERVER.fetch(id, 'RFC822')
+	ids = [int(x) for x in ids[0].split()]
+	for id in ids: 
+		rv, data = IMAP_SERVER.fetch(int(id), '(RFC822)')
 		msg = email.message_from_string(data[0][1])
-		print(msg)
-		print 'Message %s %s' % (num, msg['Subject']) 
+		print '%s: %s' % (id, msg['Subject']) 
 
 def get_mailboxes(IMAP_SERVER):
 	rv, mailboxes = IMAP_SERVER.list()	
@@ -92,14 +92,17 @@ def get_mailboxes(IMAP_SERVER):
 
 	print()
 
-def get_mails_since_date(IMAP_SERVER, date):
+def get_mails_since_date(IMAP_SERVER, date, flag):
 	#assume mailbox already selected
-	pass
+	search_term = '(SINCE "' + date + '" ' + flag + ')' 
+	rv, ids = IMAP_SERVER.search(None, search_term)
+	return ids
 
-def get_mails_on_date(IMAP_SERVER, date):
+def get_mails_on_date(IMAP_SERVER, date, flag):
 	#assume mailbox already selected
-	#rv, ids = IMAP_SERVER.search(None, "(SINCE" + ) 
-	pass
+	search_term = '(ON "' + date + '" ' + flag + ')' 
+	rv, ids = IMAP_SERVER.search(None, search_term)
+	return ids
 
 def main():
 	global results
@@ -113,26 +116,31 @@ def main():
 	parser.add_argument("-d", action='store', dest='date', help='Specify a date in the form of dd-mon-yyyy', default=ddate)
 	parser.add_argument("-c", action='store_true', dest='config', help="change the username/password")
 	parser.add_argument("-g", action='store', dest="mail_id", help="get a specific message based on its id", type=int)
-	parser.add_argument("-s", action='store', dest='keyword', help='search for a message in a mailbox based on a keyword', type=int)
+	parser.add_argument("-s", action='store', dest='keyword', help='search for a message in a mailbox based on a keyword')
+	parser.add_argument("-f", action='store', dest='flag', help="search for messages with a certain flag (see IMAP search protocol for full list of flags)", default="ALL")
 	parser.add_argument("--od", action='store', dest="on_date", help="display messages on a specific date, see -d for format", default="")
 	parser.add_argument("--sh", action="store_true", dest="act_shell", help="Add flag if you want to open shell", default=False)
 	parser.add_argument("--lm", action="store_true", dest="list_mails", help="Add flag if you want to see the mailboxes in your account", default=False)
 
 	results = parser.parse_args()
 	IMAP_SERVER = initialize()
-	
-	if !results.act_shell:
+	if not results.act_shell:
 		if results.list_mails:
 			get_mailboxes(IMAP_SERVER)
 	
+		rv, data = IMAP_SERVER.select(results.mailbox)
+		if rv == "NO":
+			print("Mailbox", results.mailbox, "not valid")
+			sys.exit()
+
 		if results.on_date: 
 			date = results.on_date
-			ids = get_mails_on_date(IMAP_SERVER, date)
-			process_mails(IMAP_SERVER, ids)
+			ids = get_mails_on_date(IMAP_SERVER, date, results.flag)
+			process_messages(IMAP_SERVER, ids)
 		else:
 			date = results.date
-			ids = get_mails_since_date(IMAP_SERVER, date)
-			process_mails(IMAP_SERVER, ids)
+			ids = get_mails_since_date(IMAP_SERVER, date, results.flag)
+			process_messages(IMAP_SERVER, ids)
 	
 	
 	IMAP_SERVER.logout()
