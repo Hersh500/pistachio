@@ -120,6 +120,11 @@ def get_message_by_id(IMAP_SERVER, message_id):
 			print payload
 	else:
 		print dehtml.dehtml(b.get_payload())
+
+def get_messages_by_keyword(IMAP_SERVER, keyword):
+	search_term = '(SEARCH "' + keyword + '")'
+	rv, ids = IMAP_SERVER.search(None, search_term) 
+	return ids	
 	
 
 def main():
@@ -148,23 +153,25 @@ def main():
 	
 		rv, data = IMAP_SERVER.select(results.mailbox)
 
-		if results.mail_id:
-			get_message_by_id(IMAP_SERVER, results.mail_id)	
-			sys.exit()
-
 		if rv == "NO":
 			print("Mailbox", results.mailbox, "not valid")
-			sys.exit()
 
-		if results.on_date: 
+		elif results.mail_id:
+			get_message_by_id(IMAP_SERVER, results.mail_id)	
+
+		elif results.keyword:
+			ids = get_messages_by_keyword(IMAP_SERVER, results.keyword)
+			process_messages(IMAP_SERVER, ids)
+
+		elif results.on_date: 
 			date = results.on_date
 			ids = get_mails_on_date(IMAP_SERVER, date, results.flag)
 			process_messages(IMAP_SERVER, ids)
+
 		else:
 			date = results.date
 			ids = get_mails_since_date(IMAP_SERVER, date, results.flag)
 			process_messages(IMAP_SERVER, ids)
-	
 	
 	IMAP_SERVER.logout()
 if __name__ == "__main__":
