@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+#HERSH SANGHVI
+#TODO: Add support for RFC search flags that require keywords https://tools.ietf.org/html/rfc3501#section-6.4.4
 
 """
 ARGS:
@@ -24,6 +26,7 @@ import getpass
 import base64
 import sys
 import datetime
+import dehtml 
 
 def initialize():
 
@@ -75,11 +78,15 @@ def default_date():
 	return date_str
 	
 def process_messages(IMAP_SERVER, ids):
+	print
+	print("=================================")
 	ids = [int(x) for x in ids[0].split()]
 	for id in ids: 
 		rv, data = IMAP_SERVER.fetch(int(id), '(RFC822)')
 		msg = email.message_from_string(data[0][1])
-		print '%s: %s' % (id, msg['Subject']) 
+		print '[%s] From %s; %s' % (id, msg['From'], msg['Subject']) 
+	print("=================================")
+	print
 
 def get_mailboxes(IMAP_SERVER):
 	rv, mailboxes = IMAP_SERVER.list()	
@@ -103,6 +110,17 @@ def get_mails_on_date(IMAP_SERVER, date, flag):
 	search_term = '(ON "' + date + '" ' + flag + ')' 
 	rv, ids = IMAP_SERVER.search(None, search_term)
 	return ids
+
+def get_message_by_id(IMAP_SERVER, message_id):	
+	rv, data = IMAP_SERVER.fetch(int(message_id), '(BODY.PEEK[TEXT])')
+	b = email.message_from_string(data[0][1])
+	print '%s: %s' % (message_id, b['Subject']) 
+	if b.is_multipart():
+		for payload in b.get_payload():
+			print payload
+	else:
+		print dehtml.dehtml(b.get_payload())
+	
 
 def main():
 	global results
@@ -129,6 +147,11 @@ def main():
 			get_mailboxes(IMAP_SERVER)
 	
 		rv, data = IMAP_SERVER.select(results.mailbox)
+
+		if results.mail_id:
+			get_message_by_id(IMAP_SERVER, results.mail_id)	
+			sys.exit()
+
 		if rv == "NO":
 			print("Mailbox", results.mailbox, "not valid")
 			sys.exit()
