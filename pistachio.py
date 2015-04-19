@@ -33,11 +33,11 @@ def initialize():
 	fname = "pist.conf"
 	try: 
 		if results.config:
-			f = configure(fname)
+			f = _configure(fname)
 		else:
 			f = open(fname, 'r')
 	except IOError:
-		f = configure(fname)
+		f = _configure(fname)
 	
 	user = f.readline().strip("\n")
 	password = base64.b64decode(f.readline().strip("\n"))
@@ -59,7 +59,7 @@ def initialize():
 	return (IMAP_SERVER)
 	
 	 
-def configure(fname):
+def _configure(fname):
 	f = open(fname, 'w')
 	print("CONFIGURING...")
 	e = raw_input("Enter your email address ")
@@ -81,6 +81,7 @@ def process_messages(IMAP_SERVER, ids):
 	print
 	print("=================================")
 	ids = [int(x) for x in ids[0].split()]
+	ids = list(reversed(ids))
 	for id in ids: 
 		rv, data = IMAP_SERVER.fetch(int(id), '(RFC822)')
 		msg = email.message_from_string(data[0][1])
