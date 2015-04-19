@@ -100,13 +100,11 @@ def get_mailboxes(IMAP_SERVER):
 	print()
 
 def get_mails_since_date(IMAP_SERVER, date, flag):
-	#assume mailbox already selected
 	search_term = '(SINCE "' + date + '" ' + flag + ')' 
 	rv, ids = IMAP_SERVER.search(None, search_term)
 	return ids
 
 def get_mails_on_date(IMAP_SERVER, date, flag):
-	#assume mailbox already selected
 	search_term = '(ON "' + date + '" ' + flag + ')' 
 	rv, ids = IMAP_SERVER.search(None, search_term)
 	return ids
@@ -140,13 +138,15 @@ def main():
 	parser.add_argument("-c", action='store_true', dest='config', help="change the username/password")
 	parser.add_argument("-g", action='store', dest="mail_id", help="get a specific message based on its id", type=int)
 	parser.add_argument("-s", action='store', dest='keyword', help='search for a message in a mailbox based on a keyword')
-	parser.add_argument("-f", action='store', dest='flag', help="search for messages with a certain flag (see IMAP search protocol for full list of flags)", default="ALL")
+	parser.add_argument("-f", action='store', dest='flag', nargs="+", help="search for messages with a certain flag (see IMAP search protocol for full list of flags and formats, https://tools.ietf.org/html/rfc3501#section-6.4.4)", default="ALL")
+	parser.add_argument("-x", action='store', dest='_delete', help="flag a message as deleted, specified by message id")
 	parser.add_argument("--od", action='store', dest="on_date", help="display messages on a specific date, see -d for format", default="")
 	parser.add_argument("--sh", action="store_true", dest="act_shell", help="Add flag if you want to open shell", default=False)
 	parser.add_argument("--lm", action="store_true", dest="list_mails", help="Add flag if you want to see the mailboxes in your account", default=False)
 
 	results = parser.parse_args()
 	IMAP_SERVER = initialize()
+
 	if not results.act_shell:
 		if results.list_mails:
 			get_mailboxes(IMAP_SERVER)
@@ -167,6 +167,9 @@ def main():
 			date = results.on_date
 			ids = get_mails_on_date(IMAP_SERVER, date, results.flag)
 			process_messages(IMAP_SERVER, ids)
+		
+		elif results._delete:
+			pass
 
 		else:
 			date = results.date
@@ -174,5 +177,6 @@ def main():
 			process_messages(IMAP_SERVER, ids)
 	
 	IMAP_SERVER.logout()
+
 if __name__ == "__main__":
 	main()
