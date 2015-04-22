@@ -13,7 +13,7 @@ with open("README.md", "rb") as f:
 setup(
 	name = "pistachio-mail", 
 	packages = ["pistachio"],
-	entry-points = {
+	entry_points = {
 		"console_scripts": ['pistachio = pistachio.pistachio:main']
 		},
 	version = version, 
