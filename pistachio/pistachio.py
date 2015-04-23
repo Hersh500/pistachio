@@ -26,7 +26,8 @@ from .dehtml import dehtml
 
 def initialize():
 
-	fname = "pist.conf"
+	fname = ".pist_conf"
+
 	try: 
 		if results.config:
 			f = _configure(fname)
@@ -56,8 +57,10 @@ def initialize():
 	
 	 
 def _configure(fname):
-	f = open(fname, 'rw')
 	print("CONFIGURING...")
+	path = raw_input("Please enter file path where .pist_conf will be created")
+	path = path + "/" + fname
+	f = open(fname, 'rw')
 	e = raw_input("Enter your email address ")
 
 	while len(e.split("@")) != 2:
@@ -125,6 +128,8 @@ def get_messages_by_keyword(IMAP_SERVER, keyword):
 def main():
 	global results
 	global months  
+	global path 
+
 	months = {"1":"Jan", "2":"Feb", "3":"Mar", "4":"Apr", "5":"May", "6":"Jun", "7":"Jul", "8":"Aug", "9":"Sep", "10":"Oct", "11":"Nov", "12":"Dec"}
 
 	parser = argparse.ArgumentParser(description='Simple Terminal Email Client via IMAP')
@@ -145,6 +150,8 @@ def main():
 	IMAP_SERVER = initialize()
 
 	if not results.act_shell:
+		if results.config:
+			_configure("./pist.conf")
 		if results.list_mails:
 			get_mailboxes(IMAP_SERVER)
 	
