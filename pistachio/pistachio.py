@@ -22,19 +22,22 @@ import getpass
 import base64
 import sys
 import datetime
+import os
 from .dehtml import dehtml 
 
 def initialize():
 
-	fname = ".pist_conf"
+	fname = "/Users/" + getpass.getuser() + "/.pistrc"
 
 	try: 
 		if results.config:
 			f = _configure(fname)
 		else:
+			os.chdir("/Users/" + getpass.getuser())
 			f = open(fname, 'r')
 	except IOError:
-		f = _configure(fname)
+		_configure(fname)
+		f = open(fname, 'r')
 	
 	user = f.readline().strip("\n")
 	password = base64.b64decode(f.readline().strip("\n"))
@@ -58,9 +61,7 @@ def initialize():
 	 
 def _configure(fname):
 	print("CONFIGURING...")
-	path = raw_input("Please enter file path where .pist_conf will be created")
-	path = path + "/" + fname
-	f = open(fname, 'rw')
+	f = open(fname, 'w')
 	e = raw_input("Enter your email address ")
 
 	while len(e.split("@")) != 2:
@@ -68,7 +69,7 @@ def _configure(fname):
 
 	f.write(str(e + "\n"))
 	f.write(base64.b64encode( getpass.getpass( "Enter your password (stored as base64 encoded str) " )))
-	return f
+	f.close()
 
 def default_date():
 	today = datetime.date.today()
@@ -151,7 +152,7 @@ def main():
 
 	if not results.act_shell:
 		if results.config:
-			_configure("./pist.conf")
+			_configure("~/.pistrc")
 		if results.list_mails:
 			get_mailboxes(IMAP_SERVER)
 	
