@@ -15,3 +15,4 @@ $python setup.py install
 ```
 And you're set! The first time you run it will ask you to configure, and this file is stored in the user's home directory (on Unix machines). 
 
+See http://hersh500.github.io/pistachio/
